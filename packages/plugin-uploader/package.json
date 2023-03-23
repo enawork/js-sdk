@@ -45,10 +45,12 @@
     "inquirer": "^8.2.5",
     "meow": "^9.0.0",
     "os-locale": "^5.0.0",
-    "puppeteer": "^19.7.5"
+    "puppeteer": "^19.7.5",
+    "request": "^2.88.2"
   },
   "devDependencies": {
     "@types/inquirer": "8.2.6",
-    "@types/puppeteer": "^5.4.7"
+    "@types/puppeteer": "^5.4.7",
+    "@types/request": "^2.48.8"
   }
 }

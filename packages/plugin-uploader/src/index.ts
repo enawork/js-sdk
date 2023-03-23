@@ -2,6 +2,7 @@ import chalk from "chalk";
 import fs from "fs";
 import puppeteer from "puppeteer";
 import type { Browser, Page } from "puppeteer";
+import request from 'request'
 
 import type { Lang } from "./lang";
 import { getBoundMessage } from "./messages";
@@ -28,12 +29,48 @@ const readyForUpload = async (
   userName: string,
   password: string,
   lang: Lang,
-  basicAuth?: BasicAuth
+  basicAuth?: BasicAuth,
+  pfx?: string,
+  passphrase?: string
 ): Promise<Page> => {
   const m = getBoundMessage(lang);
 
   const page = await browser.newPage();
   const loginUrl = `${baseUrl}/login?saml=off`;
+
+  if (pfx && passphrase) {
+    await page.setRequestInterception(true)
+    const cert = fs.promises.readFile(pfx)
+    page.on('request', interceptedRequest => {
+      // Intercept Request, pull out request options, add in client cert
+      const options = {
+        uri: interceptedRequest.url(),
+        method: interceptedRequest.method(),
+        headers: interceptedRequest.headers(),
+        body: interceptedRequest.postData(),
+        pfx: cert,
+        passphrase
+      };
+
+      // Fire off the request manually (example is using using 'request' lib)
+      request(options, function (err, resp, body) {
+        // Abort interceptedRequest on error
+        if (err) {
+          console.error(`Unable to call ${options.uri}`, err);
+          return interceptedRequest.abort('connectionrefused');
+        }
+
+        // Return retrieved response to interceptedRequest
+        interceptedRequest.respond({
+          status: resp.statusCode,
+          contentType: resp.headers['content-type'],
+          headers: resp.headers,
+          body: body
+        });
+      });
+
+    });
+  }
 
   if (basicAuth) {
     await page.authenticate(basicAuth);
@@ -110,6 +147,8 @@ interface Option {
   watch?: boolean;
   lang: Lang;
   basicAuth?: BasicAuth;
+  pfx?: string;
+  passphrase?: string;
   puppeteerIgnoreDefaultArgs?: string[];
 }
 
@@ -125,7 +164,7 @@ export const run = async (
     options.puppeteerIgnoreDefaultArgs
   );
   let page: Page;
-  const { lang, basicAuth } = options;
+  const { lang, basicAuth, pfx, passphrase } = options;
   const m = getBoundMessage(lang);
   try {
     page = await readyForUpload(
@@ -134,7 +173,9 @@ export const run = async (
       userName,
       password,
       lang,
-      basicAuth
+      basicAuth,
+      pfx,
+      passphrase
     );
     await upload(page, pluginPath, lang);
     if (options.watch) {

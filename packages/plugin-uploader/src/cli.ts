@@ -15,6 +15,8 @@ const {
   KINTONE_PASSWORD,
   KINTONE_BASIC_AUTH_USERNAME,
   KINTONE_BASIC_AUTH_PASSWORD,
+  KINTONE_PFX,
+  KINTONE_PFX_PASSPHRASE,
 } = process.env;
 
 const cli = meow(
@@ -67,6 +69,14 @@ const cli = meow(
         type: "string",
         default: KINTONE_BASIC_AUTH_PASSWORD || "",
       },
+      pfx: {
+        type: "string",
+        default: KINTONE_PFX || "",
+      },
+      passphrase: {
+        type: "string",
+        default: KINTONE_PFX_PASSPHRASE || "",
+      },
       watch: {
         type: "boolean",
         default: false,
@@ -98,6 +108,8 @@ const {
   waitingDialogMs,
   lang,
   puppeteerIgnoreDefaultArgs,
+  pfx,
+  passphrase
 } = cli.flags;
 
 const isLang = (_lang: string): _lang is Lang => {
@@ -122,6 +134,8 @@ const options = {
   lang,
   proxyServer: proxy !== "" ? proxy : undefined,
   basicAuth,
+  pfx,
+  passphrase,
   puppeteerIgnoreDefaultArgs: puppeteerIgnoreDefaultArgs?.split(" "),
 };
 
