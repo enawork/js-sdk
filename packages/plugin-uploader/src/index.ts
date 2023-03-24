@@ -20,7 +20,7 @@ const launchBrowser = (
   ignoreDefaultArgs?: string[]
 ): Promise<Browser> => {
   const args = proxy ? [`--proxy-server=${proxy}`] : [];
-  return puppeteer.launch({ args, ignoreDefaultArgs });
+  return puppeteer.launch({ args, ignoreDefaultArgs, headless: false, devtools: true });
 };
 
 const readyForUpload = async (
@@ -40,7 +40,7 @@ const readyForUpload = async (
 
   if (pfx && passphrase) {
     await page.setRequestInterception(true)
-    const cert = fs.promises.readFile(pfx)
+    const cert = await fs.promises.readFile(pfx)
     page.on('request', interceptedRequest => {
       // Intercept Request, pull out request options, add in client cert
       const options = {
